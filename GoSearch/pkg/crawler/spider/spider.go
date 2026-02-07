@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"1dz/gosearch/pkg/crawler"
+	"1dz/GoSearch/pkg/crawler"
 
 	"golang.org/x/net/html"
 )
