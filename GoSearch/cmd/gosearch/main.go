@@ -3,46 +3,44 @@ package main
 import (
 	"1dz/GoSearch/pkg/crawler"
 	"1dz/GoSearch/pkg/crawler/index"
-	fileWork "1dz/GoSearch/pkg/crawler/saveToFile"
 	"1dz/GoSearch/pkg/crawler/spider"
-	"fmt"
-	"sort"
+	"1dz/netsrv"
+	"log"
 )
 
 func main() {
-	// searchFlag := flag.String("s", "", "word to search")
-	// flag.Parse()
-	// searchWord := *searchFlag
-	// slc:=make([]index.Index,0)
-
+	// 1) Кравлим
 	bot := spider.New()
+
 	urls1, err := bot.Scan("https://go.dev/", 2)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	urls2, err := bot.Scan("https://golang.org/", 1)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	res := make([]crawler.Document, 0, len(urls1)+len(urls2))
-	res = append(res, urls1...)
-	res = append(res, urls2...)
 
-	for i := range res {
-		res[i].ID = i
+	docs := make([]crawler.Document, 0, len(urls1)+len(urls2))
+	docs = append(docs, urls1...)
+	docs = append(docs, urls2...)
+
+	// 2) Присваиваем ID
+	for i := range docs {
+		docs[i].ID = i
 	}
-	sort.Slice(res, func(i, j int) bool {
-		return res[i].ID < res[j].ID
-	})
-	rev := index.BuildRevIndex(res)
-	for i := range rev {
-		if len(rev[i].Value) > 0 {
-			fmt.Println(rev[i])
-		}
 
+	// 3) Строим обратный индекс (слово -> []id)
+	idx := index.BuildRevIndexMap(docs)
+
+	// 4) Быстрый доступ id -> Document
+	docsByID := make(map[int]crawler.Document, len(docs))
+	for _, d := range docs {
+		docsByID[d.ID] = d
 	}
-	f:=fileWork.CreateFile()
-	defer f.Close()
-	fileWork.WriteDocuments(res,f)
 
+	// 5) Запускаем TCP сервер
+	if err := netsrv.Serve(":8000", idx, docsByID); err != nil {
+		log.Fatal(err)
+	}
 }
