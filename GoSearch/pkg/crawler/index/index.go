@@ -3,39 +3,35 @@ package index
 import (
 	"1dz/GoSearch/pkg/crawler"
 	"strings"
+	"unicode"
 )
 
-type Index struct {
-	Key   string
-	Value []int
-}
-
-func NewIndex(s string, id int) *Index {
-
-	return &Index{
-		Key:   s,
-		Value: []int{},
-	}
-}
-func normalizeWord(s string) string {
+func tokenize(s string) []string {
 	s = strings.ToLower(s)
-	s = strings.TrimSpace(s)
-	s = strings.Trim(s, " \t\r\n.,:;!?\"'()[]{}<>|\\/+-=*&#@%^`~")
-	return s
+
+	var b strings.Builder
+	b.Grow(len(s))
+
+	for _, r := range s {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			b.WriteRune(r)
+		} else {
+			b.WriteRune(' ')
+		}
+	}
+
+	return strings.Fields(b.String())
 }
+
 func BuildRevIndexMap(res []crawler.Document) map[string][]int {
 	idx := make(map[string][]int)
 
 	for _, doc := range res {
-		title := normalizeWord(doc.Title)
-		words := strings.Fields(title)
+		words := tokenize(doc.Title)
 
 		seen := make(map[string]struct{}, len(words))
+
 		for _, w := range words {
-			w = normalizeWord(w)
-			if w == "" {
-				continue
-			}
 			if _, ok := seen[w]; ok {
 				continue
 			}

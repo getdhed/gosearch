@@ -17,7 +17,6 @@ func Handler(conn net.Conn, idx map[string][]int, docsByID map[int]crawler.Docum
 	for {
 		line, err := r.ReadString('\n')
 		if err != nil {
-			// клиент ушёл — это нормально
 			return
 		}
 
@@ -40,7 +39,6 @@ func Handler(conn net.Conn, idx map[string][]int, docsByID map[int]crawler.Docum
 			if !ok {
 				continue
 			}
-			// Отдаём и ID, и URL (можешь добавить Title при желании)
 			fmt.Fprintf(conn, "%d %s\n", doc.ID, doc.URL)
 		}
 		fmt.Fprintln(conn, "END")
@@ -53,7 +51,6 @@ func normalizeWord(s string) string {
 	return s
 }
 
-// Serve запускает accept-loop и размазывает клиентов по горутинам.
 func Serve(addr string, idx map[string][]int, docsByID map[int]crawler.Document) error {
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
