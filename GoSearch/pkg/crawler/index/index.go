@@ -19,19 +19,20 @@ func NewIndex(s string, id int) *Index {
 }
 func normalizeWord(s string) string {
 	s = strings.ToLower(s)
+	s = strings.TrimSpace(s)
 	s = strings.Trim(s, " \t\r\n.,:;!?\"'()[]{}<>|\\/+-=*&#@%^`~")
 	return s
 }
-func BuildRevIndex(res []crawler.Document) []Index {
-	var revIndex []Index
+func BuildRevIndexMap(res []crawler.Document) map[string][]int {
+	idx := make(map[string][]int)
 
 	for _, doc := range res {
-
 		title := normalizeWord(doc.Title)
 		words := strings.Fields(title)
-		seen := make(map[string]struct{}, len(words))
 
+		seen := make(map[string]struct{}, len(words))
 		for _, w := range words {
+			w = normalizeWord(w)
 			if w == "" {
 				continue
 			}
@@ -39,19 +40,10 @@ func BuildRevIndex(res []crawler.Document) []Index {
 				continue
 			}
 			seen[w] = struct{}{}
-			found := false
 
-			for i := range revIndex {
-				if w == revIndex[i].Key {
-					revIndex[i].Value = append(revIndex[i].Value, doc.ID)
-					found = true
-					break
-				}
-			}
-			if !found {
-				revIndex = append(revIndex, *NewIndex(w, doc.ID))
-			}
+			idx[w] = append(idx[w], doc.ID)
 		}
 	}
-	return revIndex
+
+	return idx
 }
